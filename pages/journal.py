@@ -40,10 +40,18 @@ def display_journal_page(username: str, plan_service: PlanService):
         if recent_entries:
             st.info(f"You've made {len(recent_entries)} journal entries in the past week. Latest entry was on {recent_entries[0].entry_date.strftime('%Y-%m-%d')}.")
     
+    # Initialize entry date and current week status
+    entry_date = datetime.now().date()
+    current_date = datetime.now().date()
+    is_current_week = True  # Default to True for new entries
+    
     # Journal entry form
     with st.form("journal_form"):
         # Date picker
-        entry_date = st.date_input("Date", value=datetime.now().date())
+        entry_date = st.date_input("Date", value=entry_date)
+        
+        # Update is_current_week based on selected date
+        is_current_week = abs((entry_date - current_date).days) <= 7
         
         # Weight tracking
         col1, col2 = st.columns(2)
@@ -79,57 +87,61 @@ def display_journal_page(username: str, plan_service: PlanService):
         
         # Submit button
         submitted = st.form_submit_button("Save Journal Entry")
-        
-        if submitted:
-            try:
-                with db_manager.session_scope() as session:
-                    # Check if entry for this date already exists
-                    existing_entry = session.query(Journal).filter_by(
-                        name=username, entry_date=entry_date).first()
-                    
-                    if existing_entry:
-                        # Update existing entry
-                        existing_entry.weight = weight
-                        existing_entry.mood = mood
-                        existing_entry.energy = energy
-                        existing_entry.workout_adherence = workout_adherence
-                        existing_entry.diet_adherence = diet_adherence
-                        existing_entry.notes = notes
-                        message = "Journal entry updated successfully!"
-                    else:
-                        # Create new entry
-                        new_entry = Journal(
-                            name=username,
-                            entry_date=entry_date,
-                            weight=weight,
-                            mood=mood,
-                            energy=energy,
-                            workout_adherence=workout_adherence,
-                            diet_adherence=diet_adherence,
-                            notes=notes
-                        )
-                        session.add(new_entry)
-                        message = "New journal entry saved successfully!"
-                    
-                    # Update last_journal_date in user status
-                    user_service.update_user_status(username, last_journal_date=entry_date)
+    
+    # Process form submission OUTSIDE the form
+    if submitted:
+        try:
+            with db_manager.session_scope() as session:
+                # Check if entry for this date already exists
+                existing_entry = session.query(Journal).filter_by(
+                    name=username, entry_date=entry_date).first()
                 
-                display_success_message(message)
+                if existing_entry:
+                    # Update existing entry
+                    existing_entry.weight = weight
+                    existing_entry.mood = mood
+                    existing_entry.energy = energy
+                    existing_entry.workout_adherence = workout_adherence
+                    existing_entry.diet_adherence = diet_adherence
+                    existing_entry.notes = notes
+                    message = "Journal entry updated successfully!"
+                else:
+                    # Create new entry
+                    new_entry = Journal(
+                        name=username,
+                        entry_date=entry_date,
+                        weight=weight,
+                        mood=mood,
+                        energy=energy,
+                        workout_adherence=workout_adherence,
+                        diet_adherence=diet_adherence,
+                        notes=notes
+                    )
+                    session.add(new_entry)
+                    message = "New journal entry saved successfully!"
                 
-                # Offer to generate new plan if this is for the current week
-                current_date = datetime.now().date()
-                is_current_week = abs((entry_date - current_date).days) <= 7
-                
-                if is_current_week:
-                    st.success("You've completed your journal entry for this week! You can now generate a new plan.")
-                    if st.button("Generate New Plan"):
-                        st.session_state.nav = "home"
-                        st.session_state.generate_plan = True
-                        st.rerun()
-                
-            except Exception as e:
-                logger.error(f"Error saving journal entry: {str(e)}")
-                display_error_message(f"Error saving journal entry: {str(e)}")
+                # Update last_journal_date in user status
+                user_service.update_user_status(username, last_journal_date=entry_date)
+            
+            display_success_message(message)
+            
+            # Determine if entry is for current week
+            current_date = datetime.now().date()
+            is_current_week = abs((entry_date - current_date).days) <= 7
+            
+            if is_current_week:
+                st.success("You've completed your journal entry for this week! You can now generate a new plan.")
+            
+        except Exception as e:
+            logger.error(f"Error saving journal entry: {str(e)}")
+            display_error_message(f"Error saving journal entry: {str(e)}")
+    
+    # Generate New Plan button OUTSIDE the form
+    if is_current_week and (submitted or recent_entries):
+        if st.button("Generate New Plan", key="generate_new_plan_button"):
+            st.session_state.nav = "home"
+            st.session_state.generate_plan = True
+            st.rerun()
     
     # Display journal history if available
     st.markdown("### Journal History")

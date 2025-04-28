@@ -123,3 +123,46 @@ class UserService:
             'allergies': profile['allergies'],
             'fav_foods': profile['fav_foods']
         }
+
+    def create_user(self, name: str) -> bool:
+        """Create a new user profile with just the name"""
+        try:
+            with db_manager.session_scope() as session:
+                # Check if user already exists
+                existing = session.query(UserProfile).filter_by(name=name).first()
+                if existing:
+                    return False
+                    
+                # Create new user with minimal profile
+                new_user = UserProfile(
+                    name=name,
+                    goal="",
+                    gender="",
+                    age=30,
+                    initial_weight=70.0,
+                    height=175.0,
+                    activity_level="",
+                    training_style="",
+                    diet_type="",
+                    allergies="",
+                    fav_foods=""
+                )
+                session.add(new_user)
+                
+                # Also create UserStatus entry 
+                try:
+                    from database.models import UserStatus
+                    new_status = UserStatus(
+                        name=name,
+                        first_plan_generated=False,
+                        current_week=0
+                    )
+                    session.add(new_status)
+                except ImportError:
+                    # UserStatus model not available
+                    pass
+                    
+                return True
+        except Exception as e:
+            logger.error(f"Error creating user: {str(e)}")
+            return False

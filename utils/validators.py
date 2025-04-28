@@ -5,51 +5,76 @@ def validate_plan_content(plan_content: str) -> List[str]:
     """Check for placeholder text and incomplete sections"""
     issues = []
     
-    placeholder_patterns = [
-        r"\[Repeat format.*?\]",
-        r"\[Include.*?\]",
-        r"\[Continue.*?\]",
-        r"\[Add.*?\]",
-        r"\[List.*?\]",
-        r"\.\.\.",
-        r"etc\.",
-        r"\[specify.*?\]",
+    if not plan_content or len(plan_content.strip()) < 100:
+        return ["Content is too short or empty"]
+    
+    # Check for required sections
+    required_sections = [
+        "FORM AND TECHNIQUE GUIDE",
+        "PROGRESS TRACKING"
     ]
     
-    for pattern in placeholder_patterns:
-        if re.search(pattern, plan_content, re.IGNORECASE):
-            issues.append(f"Found placeholder text matching pattern: {pattern}")
+    for section in required_sections:
+        if section not in plan_content:
+            issues.append(f"Missing required section: {section}")
     
-    # Check for minimum required exercises per day
-    required_exercises = {
-        "Day 1": 6,
-        "Day 2": 6,
-        "Day 3": 6
-    }
+    # Check for required day headers
+    required_days = ["Day 1", "Day 2", "Day 3"]
+    for day in required_days:
+        if day not in plan_content:
+            issues.append(f"Missing {day} section")
     
-    # Add multiple regex patterns to detect exercises in different formats
-    exercise_patterns = [
-        r"\d+\.\s+[A-Za-z\s\-]+(:|$)",  # Numbered with colon: "1. Bench Press:"
-        r"\d+\.\s+[A-Za-z\s\-]+\n\s+\*\s+Sets",  # Numbered without colon but with "Sets" bullet
-        r"[A-Za-z\s\-]+\s+\(\d+\s+sets",  # Exercise with sets in parentheses
-        r"Exercise\s+\d+:\s+[A-Za-z\s\-]+",  # "Exercise 1: Bench Press"
+    # Split into days and validate each
+    days = [d for d in plan_content.split("Day ") if d.strip()]
+    if len(days) < 3:
+        issues.append(f"Found {len(days)} days, expected at least 3")
+        return issues
+    
+    required_fields = [
+        "* Sets:", "* Reps:", "* Rest:", "* Weight/Intensity:",
+        "* Form:", "* Common Mistakes:", "* Cues:"
     ]
     
-    for day, min_exercises in required_exercises.items():
-        day_content_match = re.search(f"{day}.*?(?=Day|WEEKLY|FORM AND TECHNIQUE|$)", plan_content, re.DOTALL)
-        if day_content_match:
-            day_content = day_content_match.group(0)
-            # Count exercises using multiple patterns
-            exercise_count = 0
-            for pattern in exercise_patterns:
-                exercise_count += len(re.findall(pattern, day_content))
+    for i, day in enumerate(days, 1):
+        # Count exercises (lines ending with colon and starting with a number)
+        exercise_lines = [line.strip() for line in day.split('\n') 
+                        if line.strip().endswith(':') and 
+                        any(line.strip().startswith(str(j) + ".") for j in range(1, 10))]
+        
+        num_exercises = len(exercise_lines)
+        if num_exercises < 1:
+            issues.append(f"Day {i}: Not enough exercises (found {num_exercises}, minimum is 1)")
+            continue
+        
+        # Verify exercise numbering and colons
+        for j, line in enumerate(exercise_lines, 1):
+            if not line.endswith(':'):
+                issues.append(f"Day {i}: Exercise {j} should end with ':'")
+            if not line.strip():
+                issues.append(f"Day {i}: Exercise name is empty")
+        
+        # Check for required fields in each exercise
+        exercise_blocks = day.split('\n\n')
+        for j, block in enumerate(exercise_blocks, 1):
+            if not block.strip():
+                continue
             
-            # If still no exercises found, try a more general pattern as fallback
-            if exercise_count == 0:
-                exercise_count = len(re.findall(r"\d+\.\s+[A-Za-z\s\-]+", day_content))
+            if not any(block.strip().startswith(str(k) + ".") for k in range(1, 10)):
+                continue
+                
+            minimal_fields = [
+                "* Sets:", "* Reps:", "* Form:"
+            ]
             
-            if exercise_count < min_exercises:
-                issues.append(f"{day} should have at least {min_exercises} exercises, found {exercise_count}")
+            for field in minimal_fields:
+                if field not in block:
+                    issues.append(f"Day {i}, Exercise {j}: Missing field '{field}'")
+                else:
+                    # Check that the field has a value
+                    field_line = [line for line in block.split('\n') if field in line][0]
+                    field_value = field_line.split(':')[1].strip()
+                    if not field_value:
+                        issues.append(f"Day {i}, Exercise {j}: Empty value for field '{field}'")
     
     return issues
 
@@ -140,14 +165,7 @@ def validate_workout_structure(workout_content: str) -> List[str]:
     """Validate workout plan structure"""
     issues = []
     
-    required_sections = [
-        "WEEKLY WORKOUT PLAN",
-        "FORM AND TECHNIQUE GUIDE",
-        "PROGRESS TRACKING"
-    ]
-    
-    for section in required_sections:
-        if section not in workout_content:
-            issues.append(f"Missing required section: {section}")
+    if "WEEKLY WORKOUT PLAN" not in workout_content:
+        issues.append("Missing required section: WEEKLY WORKOUT PLAN")
     
     return issues

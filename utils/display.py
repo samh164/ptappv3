@@ -70,6 +70,7 @@ def display_user_summary(name: str):
     profile = user_service.get_user_profile(name)
     
     if not profile:
+        st.warning("Profile not found. Please create your profile.")
         return
     
     # Create columns for layout
@@ -77,20 +78,22 @@ def display_user_summary(name: str):
     
     with col1:
         st.markdown("### Profile Information")
-        st.write(f"Goal: {profile['goal']}")
-        st.write(f"Gender: {profile['gender']}")
-        st.write(f"Age: {profile['age']}")
-        st.write(f"Initial Weight: {profile['initial_weight']} kg")
-        st.write(f"Height: {profile['height']} cm")
-        st.write(f"Activity Level: {profile['activity_level']}")
-        st.write(f"Training Style: {profile['training_style']}")
-        st.write(f"Diet Type: {profile['diet_type']}")
+        st.write(f"Goal: {profile.get('goal', 'Not set')}")
+        st.write(f"Gender: {profile.get('gender', 'Not set')}")
+        st.write(f"Age: {profile.get('age', 'Not set')}")
+        st.write(f"Initial Weight: {profile.get('initial_weight', 'Not set')} {' kg' if profile.get('initial_weight') else ''}")
+        st.write(f"Height: {profile.get('height', 'Not set')} {' cm' if profile.get('height') else ''}")
+        st.write(f"Activity Level: {profile.get('activity_level', 'Not set')}")
+        st.write(f"Training Style: {profile.get('training_style', 'Not set')}")
+        st.write(f"Diet Type: {profile.get('diet_type', 'Not set')}")
         
         # Add allergies and favorite foods if they exist
-        if profile['allergies']:
-            st.write(f"Allergies/Restrictions: {profile['allergies']}")
-        if profile['fav_foods']:
-            st.write(f"Favorite Foods: {profile['fav_foods']}")
+        allergies = profile.get('allergies', '')
+        fav_foods = profile.get('fav_foods', '')
+        if allergies:
+            st.write(f"Allergies/Restrictions: {allergies}")
+        if fav_foods:
+            st.write(f"Favorite Foods: {fav_foods}")
     
     with col2:
         # Get latest stats from journal
@@ -98,11 +101,11 @@ def display_user_summary(name: str):
         
         st.markdown("### Latest Statistics")
         if latest_journal:
-            st.write(f"Current Weight: {latest_journal['weight']} kg")
-            st.write(f"Workout Adherence: {latest_journal['workout_adherence']}%")
-            st.write(f"Diet Adherence: {latest_journal['diet_adherence']}%")
-            st.write(f"Energy Level: {latest_journal['energy']}")
-            st.write(f"Mood: {latest_journal['mood']}")
+            st.write(f"Current Weight: {latest_journal.get('weight', 'Not recorded')} kg")
+            st.write(f"Workout Adherence: {latest_journal.get('workout_adherence', 'Not recorded')}%")
+            st.write(f"Diet Adherence: {latest_journal.get('diet_adherence', 'Not recorded')}%")
+            st.write(f"Energy Level: {latest_journal.get('energy', 'Not recorded')}")
+            st.write(f"Mood: {latest_journal.get('mood', 'Not recorded')}")
         else:
             st.write("No journal entries yet")
 

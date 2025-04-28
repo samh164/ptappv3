@@ -17,6 +17,14 @@ def display_home_page(name: str, plan_service: PlanService, ai_service: AIServic
     status = user_service.get_user_status(name)
     profile = user_service.get_user_profile(name)
     
+    # Check if profile is complete
+    if not profile or not profile.get('goal') or not profile.get('gender'):
+        st.warning("Please complete your profile before generating a fitness plan.")
+        if st.button("Go to Profile"):
+            st.session_state.nav = "profile"
+            st.rerun()
+        return
+    
     if not status or not status['first_plan_generated']:
         st.info("🎯 Let's create your first fitness plan!")
         if st.button("Generate My First Plan") or st.session_state.get('generate_plan', False):
@@ -69,7 +77,13 @@ def display_home_page(name: str, plan_service: PlanService, ai_service: AIServic
                             try:
                                 user_data = user_service.create_user_data_dict(profile)
                                 previous_plans = plan_service.get_previous_plans(name)
-                                output = ai_service.generate_fitness_plan(user_data, previous_plans)
+                                # Get journal summary to include in the plan generation
+                                journal_summary = plan_service.get_journal_summary(name, weeks=1)
+                                output = ai_service.generate_fitness_plan(
+                                    user_data, 
+                                    previous_plans,
+                                    journal_summary=journal_summary
+                                )
                                 if output:
                                     plan_service.save_plan(name, output)
                                     user_service.update_user_status(name, current_week=current_week + 1)

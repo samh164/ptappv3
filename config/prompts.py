@@ -202,8 +202,11 @@ Diet Type: {diet_type}
 Allergies: {allergies}
 Favorite Foods: {fav_foods}
 
-PREVIOUS PLANS AND PROGRESS:
+PREVIOUS PLANS:
 {previous_plans}
+
+RECENT JOURNAL SUMMARY:
+{journal_summary}
 
 REQUIREMENTS:
 1. Analyze previous plan adherence and results
@@ -211,13 +214,17 @@ REQUIREMENTS:
 3. Modify meal plan based on dietary compliance and preferences
 4. Include detailed instructions for all exercises and meals
 5. NO placeholder text or repetition instructions
+6. DIRECTLY address issues mentioned in journal entries (low adherence, mood, energy, etc.)
+7. If journal shows poor adherence or excessive cheat meals, adjust intensity and provide more achievable targets
 
 Follow the same detailed format as the first plan, but with appropriate progressions and adjustments based on the user's journey so far.
 
 Remember:
-- Progressive overload in workouts
+- Progressive overload in workouts ONLY if journal shows good adherence
+- Reduce workout intensity if journal shows fatigue, low energy, or poor adherence
 - Variety in meal choices while maintaining structure
-- Address any challenges mentioned in journal entries
+- If journal mentions cheat meals, adjust meal plan to include some controlled treats
+- Address any challenges mentioned in journal entries with specific solutions
 - Provide specific form improvements based on reported issues
 '''
 

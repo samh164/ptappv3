@@ -189,3 +189,47 @@ class PlanService:
                 detached_journals.append(detached_journal)
                 
             return detached_journals
+            
+    def get_all_user_plans(self, username):
+        """Get all fitness plans for a user with week numbers"""
+        with db_manager.session_scope() as session:
+            # Get all plans ordered by creation date (oldest first)
+            plans = session.query(Plan)\
+                .filter(Plan.name == username)\
+                .order_by(Plan.created_date.asc())\
+                .all()
+                
+            if not plans:
+                return []
+                
+            # Create detached copies of the plans with week numbers
+            all_plans = []
+            for i, plan in enumerate(plans):
+                # Create a dictionary of the plan's attributes
+                plan_dict = {
+                    'id': plan.id,
+                    'name': plan.name,
+                    'age': plan.age,
+                    'gender': plan.gender,
+                    'goal': plan.goal,
+                    'weight': plan.weight,
+                    'height': plan.height,
+                    'activity_level': plan.activity_level,
+                    'training_style': plan.training_style,
+                    'diet_type': plan.diet_type,
+                    'plan': plan.plan,
+                    'created_date': plan.created_date
+                }
+                
+                # Create a detached Plan object with the copied attributes
+                detached_plan = Plan()
+                for key, value in plan_dict.items():
+                    setattr(detached_plan, key, value)
+                
+                # Add week number as an attribute (not in the database schema)
+                week_number = i + 1  # Week 1 is the first plan, Week 2 is the second, etc.
+                setattr(detached_plan, 'week_number', week_number)
+                
+                all_plans.append(detached_plan)
+                
+            return all_plans
