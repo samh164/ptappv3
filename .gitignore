@@ -39,6 +39,7 @@ PTApp_fixed.py
 *.db
 *.sqlite3
 *.sqlite
+database.zip
 
 # Environment variables
 .env
