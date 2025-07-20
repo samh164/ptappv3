@@ -4,7 +4,7 @@ Script to import exercise data from multiple sources and create a unified databa
 
 import logging
 import os
-from exercise_importer import ExerciseImporter
+from database.exercise_importer import ExerciseImporter
 
 # Configure logging
 logging.basicConfig(
