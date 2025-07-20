@@ -643,3 +643,15 @@ DO NOT include any other sections. ONLY provide the progress tracking guide.
                 formatted_data.append(f"Favorite Foods: {value}")
         
         return "\n".join(formatted_data)
+
+    def chat_with_user(self, messages: List[Dict[str, str]], context: str) -> str:
+        """Send a chat conversation to the OpenAI API and return the assistant reply."""
+        payload = {
+            "model": "gpt-4-turbo",
+            "messages": [{"role": "system", "content": context}] + messages,
+            "temperature": 0.7,
+            "max_tokens": 1000,
+        }
+
+        response = self._call_openai_api("chat/completions", payload)
+        return response["choices"][0]["message"]["content"]
