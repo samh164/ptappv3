@@ -120,3 +120,91 @@ def display_success_message(message: str):
 def display_info_message(message: str):
     """Display info message in Streamlit"""
     st.info(message)
+
+
+def parse_plan(plan_text: str) -> Dict[str, Any]:
+    """Parse the raw plan text into workout and meal day sections."""
+    import re
+
+    workouts, meals = {}, {}
+
+    # Extract workout section
+    if "## WEEKLY WORKOUT PLAN" in plan_text:
+        workout_section = plan_text.split("## WEEKLY WORKOUT PLAN", 1)[1]
+        if "## WEEKLY MEAL PLAN" in workout_section:
+            workout_section = workout_section.split("## WEEKLY MEAL PLAN", 1)[0]
+        day_blocks = re.findall(r"(Day\s+\d+[^\n]*\n(?:.*?))(?:\n(?=Day\s+\d+)|$)", workout_section, re.DOTALL)
+        for block in day_blocks:
+            lines = [ln for ln in block.strip().splitlines() if ln.strip()]
+            if not lines:
+                continue
+            header = lines[0].strip()
+            content = "\n".join(lines[1:]).strip()
+            workouts[header] = content
+
+    # Extract meal section
+    if "## WEEKLY MEAL PLAN" in plan_text:
+        meal_section = plan_text.split("## WEEKLY MEAL PLAN", 1)[1]
+        if "## FORM AND TECHNIQUE GUIDE" in meal_section:
+            meal_section = meal_section.split("## FORM AND TECHNIQUE GUIDE", 1)[0]
+        meal_blocks = re.findall(
+            r"((?:Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday):\n(?:.*?))(?:\n(?=(?:Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday):)|$)",
+            meal_section,
+            re.DOTALL,
+        )
+        for block in meal_blocks:
+            lines = [ln for ln in block.strip().splitlines() if ln.strip()]
+            if not lines:
+                continue
+            header = lines[0].rstrip(":")
+            content = "\n".join(lines[1:]).strip()
+            meals[header] = content
+
+    # Remaining sections
+    form_guide = ""
+    progress = ""
+    if "## FORM AND TECHNIQUE GUIDE" in plan_text:
+        form_section = plan_text.split("## FORM AND TECHNIQUE GUIDE", 1)[1]
+        if "## PROGRESS TRACKING" in form_section:
+            form_guide = form_section.split("## PROGRESS TRACKING", 1)[0].strip()
+        else:
+            form_guide = form_section.strip()
+    if "## PROGRESS TRACKING" in plan_text:
+        progress = plan_text.split("## PROGRESS TRACKING", 1)[1].strip()
+
+    return {
+        "workouts": workouts,
+        "meals": meals,
+        "form_guide": form_guide,
+        "progress_tracking": progress,
+    }
+
+
+def display_plan(plan_text: str) -> None:
+    """Render a plan in a tabbed layout for easier reading."""
+    sections = parse_plan(plan_text)
+
+    if sections["workouts"]:
+        st.markdown("### Weekly Workout Plan")
+        workout_tabs = st.tabs(list(sections["workouts"].keys()))
+        for tab, title in zip(workout_tabs, sections["workouts"].keys()):
+            with tab:
+                st.markdown(f"#### {title}")
+                st.markdown(sections["workouts"][title])
+
+    if sections["meals"]:
+        st.markdown("### Weekly Meal Plan")
+        meal_tabs = st.tabs(list(sections["meals"].keys()))
+        for tab, title in zip(meal_tabs, sections["meals"].keys()):
+            with tab:
+                st.markdown(f"#### {title}")
+                st.markdown(sections["meals"][title])
+
+    if sections["form_guide"]:
+        st.markdown("### Form and Technique Guide")
+        st.markdown(sections["form_guide"])
+
+    if sections["progress_tracking"]:
+        st.markdown("### Progress Tracking")
+        st.markdown(sections["progress_tracking"])
+

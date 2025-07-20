@@ -1,5 +1,6 @@
 import streamlit as st
 from services.plan_service import PlanService
+from utils.display import display_plan
 import logging
 
 logger = logging.getLogger(__name__)
@@ -70,7 +71,7 @@ def display_history_page(username: str, plan_service: PlanService):
                 cols[1].metric("Allergies/Restrictions", selected_plan.allergies)
         
         # Display the plan content
-        st.markdown(selected_plan.plan)
+        display_plan(selected_plan.plan)
         
         # Add navigation buttons for easier week switching
         st.markdown("---")

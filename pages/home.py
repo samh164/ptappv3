@@ -3,7 +3,12 @@ from typing import Optional
 from services.plan_service import PlanService
 from services.ai_service_alt import AIService
 from services.user_service import UserService
-from utils.display import display_success_message, display_info_message, display_error_message
+from utils.display import (
+    display_success_message,
+    display_info_message,
+    display_error_message,
+    display_plan,
+)
 import logging
 
 logger = logging.getLogger(__name__)
@@ -36,7 +41,7 @@ def display_home_page(name: str, plan_service: PlanService, ai_service: AIServic
                         plan_service.save_plan(name, output)
                         user_service.update_user_status(name, first_plan_generated=True, current_week=1)
                         display_success_message("✅ Your first plan is ready!")
-                        st.markdown(output)
+                        display_plan(output)
                         
                         # Clear the generate_plan flag to prevent auto-regeneration
                         if 'generate_plan' in st.session_state:
@@ -66,7 +71,7 @@ def display_home_page(name: str, plan_service: PlanService, ai_service: AIServic
                 # Safely access plan content
                 plan_content = getattr(last_plan, 'plan', None)
                 if plan_content:
-                    st.markdown(plan_content)
+                    display_plan(plan_content)
                 else:
                     st.error("The plan content appears to be empty.")
                 
@@ -88,7 +93,7 @@ def display_home_page(name: str, plan_service: PlanService, ai_service: AIServic
                                     plan_service.save_plan(name, output)
                                     user_service.update_user_status(name, current_week=current_week + 1)
                                     display_success_message("✅ Your new plan is ready!")
-                                    st.markdown(output)
+                                    display_plan(output)
                                 else:
                                     st.error("Failed to generate a valid fitness plan. This could be due to issues with dietary restrictions or exercise requirements.")
                                     st.warning("Please try again or modify your dietary restrictions in your profile.")
@@ -117,7 +122,7 @@ def display_home_page(name: str, plan_service: PlanService, ai_service: AIServic
                             plan_service.save_plan(name, output)
                             user_service.update_user_status(name, first_plan_generated=True, current_week=1)
                             display_success_message("✅ Your new plan is ready!")
-                            st.markdown(output)
+                            display_plan(output)
                         else:
                             st.error("Failed to generate a valid fitness plan. This could be due to issues with dietary restrictions or exercise requirements.")
                             st.warning("Please try again or modify your dietary restrictions in your profile.")
