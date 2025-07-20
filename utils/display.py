@@ -120,3 +120,91 @@ def display_success_message(message: str):
 def display_info_message(message: str):
     """Display info message in Streamlit"""
     st.info(message)
+
+
+def _parse_plan_sections(plan_content: str) -> Dict[str, str]:
+    """Split the full plan into sections by level-two headings."""
+    sections = {}
+    current_section = None
+    current_lines = []
+
+    for line in plan_content.splitlines():
+        if line.startswith("##"):
+            if current_section:
+                sections[current_section] = "\n".join(current_lines).strip()
+            current_section = line.strip("# ")
+            current_lines = []
+        else:
+            current_lines.append(line)
+
+    if current_section:
+        sections[current_section] = "\n".join(current_lines).strip()
+
+    return sections
+
+
+def _split_days(section_text: str, day_labels: list) -> Dict[str, str]:
+    """Split a section text into day-specific content."""
+    days = {}
+    current_day = None
+    current_lines = []
+
+    for line in section_text.splitlines():
+        stripped = line.strip()
+        if any(stripped.startswith(label) for label in day_labels):
+            if current_day:
+                days[current_day] = "\n".join(current_lines).strip()
+            current_day = stripped
+            current_lines = []
+        else:
+            current_lines.append(line)
+
+    if current_day:
+        days[current_day] = "\n".join(current_lines).strip()
+
+    return days
+
+
+def display_plan_tabs(plan_content: str) -> None:
+    """Display workout and meal plan sections using tabs for each day."""
+    sections = _parse_plan_sections(plan_content)
+
+    workout_days = _split_days(
+        sections.get("WEEKLY WORKOUT PLAN", ""),
+        [f"Day {i}" for i in range(1, 8)]
+    )
+
+    meal_days = _split_days(
+        sections.get("WEEKLY MEAL PLAN", ""),
+        [
+            "Monday",
+            "Tuesday",
+            "Wednesday",
+            "Thursday",
+            "Friday",
+            "Saturday",
+            "Sunday",
+        ],
+    )
+
+    if workout_days:
+        st.markdown("## Weekly Workout Plan")
+        tabs = st.tabs(list(workout_days.keys()))
+        for tab, day in zip(tabs, workout_days.keys()):
+            with tab:
+                st.markdown(workout_days[day])
+
+    if meal_days:
+        st.markdown("## Weekly Meal Plan")
+        tabs = st.tabs(list(meal_days.keys()))
+        for tab, day in zip(tabs, meal_days.keys()):
+            with tab:
+                st.markdown(meal_days[day])
+
+    if "FORM AND TECHNIQUE GUIDE" in sections:
+        st.markdown("## Form and Technique Guide")
+        st.markdown(sections["FORM AND TECHNIQUE GUIDE"])
+
+    if "PROGRESS TRACKING" in sections:
+        st.markdown("## Progress Tracking")
+        st.markdown(sections["PROGRESS TRACKING"])
