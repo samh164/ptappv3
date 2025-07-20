@@ -13,6 +13,7 @@ from pages.profile import display_profile_page
 from pages.journal import display_journal_page
 from pages.progress import display_progress_page
 from pages.history import display_history_page
+from pages.chat import display_chat_page
 
 # Configure page and logging
 st.set_page_config(
@@ -69,6 +70,8 @@ if 'current_user' not in st.session_state:
     st.session_state.current_user = None
 if 'shown_popups' not in st.session_state:
     st.session_state.shown_popups = set()
+if 'conversations' not in st.session_state:
+    st.session_state.conversations = {}
 
 # Initialize database
 try:
@@ -174,20 +177,20 @@ def main():
             show_workflow_guidance()
         else:
             # Ensure we have a valid navigation key
-            if st.session_state.nav not in ['home', 'profile', 'journal', 'progress', 'history']:
+            if st.session_state.nav not in ['home', 'profile', 'journal', 'progress', 'history', 'chat']:
                 st.session_state.nav = 'profile'
                 
             # Navigation buttons
             st.markdown('<div style="margin-bottom: 20px;">', unsafe_allow_html=True)
-            cols = st.columns(5)
-            
             nav_items = {
                 'home': ('🏠 Home', display_home_page),
                 'profile': ('👤 Profile', display_profile_page),
                 'journal': ('📓 Journal', display_journal_page),
                 'progress': ('📊 Progress', display_progress_page),
-                'history': ('📚 History', display_history_page)
+                'history': ('📚 History', display_history_page),
+                'chat': ('💬 Chat', display_chat_page)
             }
+            cols = st.columns(len(nav_items))
             
             for i, (nav_key, (label, func)) in enumerate(nav_items.items()):
                 if cols[i].button(label, key=f"nav_{nav_key}", use_container_width=True):
@@ -223,6 +226,8 @@ def main():
                     current_page(st.session_state.current_user)
                 elif current_page == display_history_page:
                     current_page(st.session_state.current_user, plan_service)
+                elif current_page == display_chat_page:
+                    current_page(st.session_state.current_user, plan_service, ai_service)
                 
             except Exception as e:
                 logger.error(f"Error displaying page {st.session_state.nav}: {str(e)}")
