@@ -5,6 +5,7 @@ import plotly.graph_objects as go
 from datetime import datetime, timedelta
 from database.connection import db_manager
 from database.models import Journal, Plan
+from utils.display import display_plan
 import logging
 
 logger = logging.getLogger(__name__)
@@ -149,4 +150,4 @@ def display_progress_page(username: str):
             st.write(f"Goal: {plan.goal}")
             st.write(f"Weight at time of plan: {plan.weight} kg")
             st.markdown("**Plan Details:**")
-            st.markdown(plan.plan)
+            display_plan(plan.plan)
