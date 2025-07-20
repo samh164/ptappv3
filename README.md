@@ -41,8 +41,8 @@ A Streamlit web application that generates personalized fitness plans using AI, 
    - Create a `.env` file in the root directory
    - Add your API keys:
      ```
-     OPENAI_API_KEY=your_openai_api_key
-     RAPIDAPI_KEY=your_rapidapi_key
+    OPENAI_API_KEY=your_openai_api_key
+    EXERCISEDB_API_KEY=your_exercisedb_api_key
      ```
 
 ## Usage
